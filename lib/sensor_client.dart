@@ -1,15 +1,16 @@
 
+
 import 'package:grpc/grpc.dart';
-import 'package:realtime_communication/src/generated/sensor.pbgrpc.dart';
-import 'package:realtime_communication/src/generated/sensor.pb.dart';
+
+import 'src/generated/sensor.pb.dart';
+import 'src/generated/sensor.pbgrpc.dart';
 
 class SensorClient {
-  late final ClientChannel channel;
-  late final SensorServiceClient stub;
+  late ClientChannel _channel;
+  late SensorServiceClient _stub;
 
-  // Menghubungkan client ke server gRPC
-  SensorClient({String host = '192.168.1.5'}) {
-    channel = ClientChannel(
+  SensorClient({required String host}) {
+    _channel = ClientChannel(
       host,
       port: 50051,
       options: const ChannelOptions(
@@ -17,23 +18,27 @@ class SensorClient {
       ),
     );
 
-    stub = SensorServiceClient(channel);
+    _stub = SensorServiceClient(_channel);
   }
 
-  // Unary RPC: mengambil satu data sensor
-  Future<SensorReading> getLatest(String deviceId) async {
-    final request = SensorRequest()..deviceId = deviceId;
-    return stub.getLatest(request);
+  // Mengambil satu data sensor
+  Future<SensorReading> getLatest(String deviceId) {
+    final request = SensorRequest()
+      ..deviceId = deviceId;
+
+    return _stub.getLatest(request);
   }
 
-  // Server Streaming: menerima banyak data sensor
+  // Menerima data sensor secara streaming
   Stream<SensorReading> watchSensor(String deviceId) {
-    final request = SensorRequest()..deviceId = deviceId;
-    return stub.watchSensor(request);
+    final request = SensorRequest()
+      ..deviceId = deviceId;
+
+    return _stub.watchSensor(request);
   }
 
-  // Menutup koneksi gRPC
+  // Menutup koneksi
   Future<void> close() async {
-    await channel.shutdown();
+    await _channel.shutdown();
   }
 }
